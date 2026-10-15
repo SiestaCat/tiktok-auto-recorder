@@ -1,0 +1,6 @@
+Django>=5.2,<5.3
+mysqlclient>=2.2,<3
+PyMySQL>=1.1,<2
+gunicorn>=23,<26
+playwright>=1.55,<2
+invisible-playwright>=0.22,<1

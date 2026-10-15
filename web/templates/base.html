@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok MultiRecorder</title>
+<style>
+:root {font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#101725;color:#eaf0fb}
+body {max-width:1250px;margin:0 auto;padding:1.5rem} a {color:#8dc9ff} h1 {margin:.5rem 0 1rem}
+section {background:#1a2536;padding:1rem 1.2rem;margin:1.2rem 0;border-radius:12px}
+input,button {border-radius:6px;border:1px solid #516077;padding:.55rem;background:#101725;color:#eaf0fb}
+button {cursor:pointer;background:#294c78}button:hover {background:#34669d}
+form {display:inline-flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.2rem}
+input[type=number] {width:5rem}input[type=file] {max-width:16rem}
+table {width:100%;border-collapse:collapse;font-size:.92rem} th,td {text-align:left;padding:.65rem;border-bottom:1px solid #354258;vertical-align:top}
+small,.muted {color:#aebbd0}.flash {padding:.7rem;border-radius:8px;background:#385169;margin:.5rem 0}
+.flash.error {background:#683332} .scroll {overflow-x:auto} .status {font-weight:650} pre {white-space:pre-wrap;overflow-wrap:anywhere;background:#0b111e;padding:1rem}
+</style></head><body>
+<header><h1>🎥 TikTok MultiRecorder</h1>{% if session.get('authenticated') %}<form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf_token }}"><button>Cerrar sesión</button></form>{% endif %}</header>
+{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}
+{% block body %}{% endblock %}
+</body></html>

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block body %}
+<p class="muted">Recarga la página para actualizar el estado. Las grabaciones se ejecutan en el worker, no en esta interfaz.</p>
+<section><h2>Perfil de TikTok</h2>
+<p>Estado: <strong>{{'Instalado ✅' if profile.installed else 'Falta importar ⚠️'}}</strong></p>
+<form action="{{url_for('uploadProfile')}}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="_csrf" value="{{csrf_token}}"><input type="file" name="file" accept=".zip,application/zip" required><button>Importar perfil ZIP</button></form>
+</section>
+<section><h2>Usuarios y programación</h2>
+<form action="{{url_for('addTarget')}}" method="post"><input type="hidden" name="_csrf" value="{{csrf_token}}"><input type="text" name="username" placeholder="@usuario" required><label>Intervalo (min) <input type="number" name="interval" value="5" min="1" max="1440" required></label><button>Añadir usuario</button></form>
+<div class="scroll"><table><thead><tr><th>Usuario</th><th>Estado</th><th>Comprobación</th><th>Controles</th></tr></thead><tbody>
+{% for t in targets %}<tr><td><strong>@{{t.username}}</strong><div class="muted">{{ 'Automático' if t.auto_check else 'Una comprobación' }} · {{t.check_interval_minutes}} min</div></td>
+<td><span class="status">{{t.status}}</span> · {{'activo' if t.active else 'inactivo'}}{% if t.last_error %}<div class="muted">{{t.last_error}}</div>{% endif %}</td>
+<td><small>Última: {{t.last_checked_at or '—'}}<br>Próxima: {{t.next_check_at or '—'}}</small></td>
+<td><form action="{{url_for('start',username=t.username)}}" method="post"><input type="hidden" name="_csrf" value="{{csrf_token}}"><button>Iniciar</button></form>
+<form action="{{url_for('stop',username=t.username)}}" method="post"><input type="hidden" name="_csrf" value="{{csrf_token}}"><button>Detener</button></form>
+<form action="{{url_for('schedule',username=t.username)}}" method="post"><input type="hidden" name="_csrf" value="{{csrf_token}}"><input type="hidden" name="enabled" value="true"><input type="number" name="interval" min="1" max="1440" value="{{t.check_interval_minutes}}"><button>Programar</button></form>
+<form action="{{url_for('schedule',username=t.username)}}" method="post"><input type="hidden" name="_csrf" value="{{csrf_token}}"><input type="hidden" name="enabled" value="false"><button>Desprogramar</button></form>
+<form action="{{url_for('deleteTarget',username=t.username)}}" method="post" onsubmit="return confirm('¿Eliminar usuario? No se podrán conservar grabaciones ligadas al usuario')"><input type="hidden" name="_csrf" value="{{csrf_token}}"><button>Eliminar usuario</button></form></td></tr>
+{% else %}<tr><td colspan="4">Todavía no hay usuarios.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section><h2>Grabaciones (últimas 200)</h2><div class="scroll"><table><thead><tr><th>Usuario / archivo</th><th>Estado</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody>
+{% for r in recordings %}<tr><td>@{{r.username}}<br><small>{{r.filename}}</small><br><small>{{r.started_at}}</small></td><td>{{r.status}}</td><td>{{(r.size_bytes/1048576)|round(2)}} MiB</td><td>
+{% if r.status != 'recording' and r.size_bytes > 0 %}<a href="{{url_for('download',recId=r.id)}}">Descargar</a> · {% endif %}<a href="{{url_for('recordingLogs',recId=r.id)}}">Logs FFmpeg</a>
+{% if r.status != 'recording' %}<form action="{{url_for('deleteRecording',recId=r.id)}}" method="post" onsubmit="return confirm('¿Eliminar archivo definitivamente?')"><input type="hidden" name="_csrf" value="{{csrf_token}}"><button>Eliminar</button></form>{% endif %}
+</td></tr>{% else %}<tr><td colspan="4">Todavía no hay grabaciones.</td></tr>{% endfor %}</tbody></table></div></section>
+<section><h2>Eventos recientes</h2><div class="scroll"><table><thead><tr><th>Fecha</th><th>Usuario</th><th>Nivel</th><th>Mensaje</th></tr></thead><tbody>{% for l in logs %}<tr><td><small>{{l.created_at}}</small></td><td>{{l.username or 'Sistema'}}</td><td>{{l.level}}</td><td>{{l.message}}</td></tr>{% else %}<tr><td colspan="4">Sin eventos</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}
