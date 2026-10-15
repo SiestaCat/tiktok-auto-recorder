@@ -10,7 +10,7 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
     raise ImproperlyConfigured('DJANGO_SECRET_KEY debe tener al menos 32 caracteres')
 if not API_KEY or len(API_KEY) < 20:
     raise ImproperlyConfigured('API_KEY debe tener al menos 20 caracteres')
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = [x.strip() for x in os.environ.get('DJANGO_ALLOWED_HOSTS', 'api,localhost,127.0.0.1').split(',') if x.strip()]
 INSTALLED_APPS = ['django.contrib.contenttypes', 'recorder']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
@@ -35,3 +35,37 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'stream': 'ext://sys.stderr',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'recorder': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

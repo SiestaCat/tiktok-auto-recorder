@@ -17,6 +17,7 @@ from .models import EventLog, Recording, Target
 from .profileImport import importProfile, MAX_ZIP_BYTES
 from .utils import logEvent, normalizeUsername, validateInterval
 
+from datetime import timedelta
 
 def responseError(message, status=400):
     return JsonResponse({'error': str(message)}, status=status)
@@ -61,9 +62,18 @@ def targetJson(target):
 
 
 def recordingJson(item):
+    sizeBytes = item.size_bytes
+
+    if item.status == 'recording':
+        path = validPath(settings.DATA_DIR / 'videos', item.file_path)
+        try:
+            sizeBytes = path.stat().st_size
+        except FileNotFoundError:
+            pass
+
     return dict(id=item.pk, username=item.target.username,
                 filename=Path(item.file_path).name, status=item.status,
-                size_bytes=item.size_bytes, started_at=iso(item.started_at), ended_at=iso(item.ended_at),
+                size_bytes=sizeBytes, started_at=iso(item.started_at), ended_at=iso(item.ended_at),
                 download_url=f'/api/v1/recordings/{item.pk}/download/',
                 logs_url=f'/api/v1/recordings/{item.pk}/logs/')
 
@@ -144,11 +154,24 @@ def stopTarget(request, username):
     obj = findTarget(username)
     if not obj:
         return responseError('Usuario no encontrado', 404)
-    obj.active = False
-    obj.next_check_at = None
-    obj.status = 'stopping' if obj.status in ('recording', 'checking') else 'stopped'
+
+    busy = obj.status in ('recording', 'checking', 'stopping')
+
+    if busy:
+        obj.active = False
+        obj.next_check_at = None
+        obj.status = 'stopping'
+    elif obj.auto_check:
+        obj.active = True
+        obj.next_check_at = timezone.now() + timedelta(minutes=obj.check_interval_minutes)
+        obj.status = 'waiting'
+    else:
+        obj.active = False
+        obj.next_check_at = None
+        obj.status = 'stopped'
+
     obj.save()
-    logEvent(obj, 'Parada solicitada')
+    logEvent(obj, 'Parada solicitada; programación automática conservada')
     return JsonResponse(targetJson(obj))
 
 

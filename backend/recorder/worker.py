@@ -143,8 +143,8 @@ def checkTarget(pk):
         close_old_connections()
         target = Target.objects.filter(pk=pk).first()
         if target:
-            if target.active and target.auto_check and not STOP.is_set():
-                updateTarget(pk, status='waiting', next_check_at=timezone.now() + timedelta(minutes=target.check_interval_minutes))
+            if target.auto_check and not STOP.is_set():
+                updateTarget(pk, status='waiting', active=True, next_check_at=timezone.now() + timedelta(minutes=target.check_interval_minutes))
             else:
                 updateTarget(pk, status='stopped', active=False, next_check_at=None)
         close_old_connections()

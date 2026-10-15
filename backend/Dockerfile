@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && python -m invisible_playwright fetch
 COPY . .
 RUN mkdir -p /app/data /opt/invisible-browser \
-    && useradd --uid 10001 --create-home appuser \
+    && groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid 1000 --create-home appuser \
     && chown -R appuser:appuser /app /opt/invisible-browser \
     && chmod -R a+rX /opt/invisible-browser
 USER appuser

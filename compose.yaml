@@ -14,6 +14,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+  
+  init-data:
+    image: alpine:3.20
+    user: "0:0"
+    volumes:
+      - api-data:/app/data
+    command: sh -c "chown -R 1000:1000 /app/data"
+    restart: "no"
 
   api:
     image: tiktok-recorder-api:local
@@ -29,12 +37,12 @@ services:
       API_KEY: ${API_KEY:?Set API_KEY in .env}
       DATA_DIR: /app/data
     volumes: &backend-volumes
-      - ./data:/app/data
+      - api-data:/app/data
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
     depends_on:
       mysql:
         condition: service_healthy
-    command: ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120 --no-control-socket --access-logfile - --error-logfile - --capture-output"]
+    command: ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --log-level debug --workers 2 --timeout 120 --no-control-socket --access-logfile - --error-logfile - --capture-output"]
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     healthcheck:
@@ -75,3 +83,4 @@ services:
 
 volumes:
   mysql_data:
+  api-data:
